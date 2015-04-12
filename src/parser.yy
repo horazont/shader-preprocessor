@@ -7,7 +7,7 @@
 
 %require "2.3"
 %debug
-%start start
+%start program
 %defines
 %skeleton "lalr1.cc"
 %name-prefix "spp"
@@ -15,19 +15,21 @@
 %locations
 
 %parse-param { spp::ParserContext &ctx }
+%parse-param { spp::Program &dest }
 %error-verbose
 
 %union {
     std::string *sourceline;
+    Program *program;
 }
 
 %token END 0 "end of file"
 %token EOL "end of line"
 %token <sourceline> SOURCELINE "shader source line"
 
-%type <sourceline> program start
+%type <program> program
 
-%destructor { delete $$; } SOURCELINE program start
+%destructor { delete $$; } SOURCELINE
 
 %{
 
@@ -41,19 +43,15 @@
 program
     : program SOURCELINE
     {
-        $$ = $1;
-        (*$$) += *$2;
+        $$ = &dest;
+        $$->append_section(new StaticSourceSection(*$2));
         delete $2;
     }
     | SOURCELINE
     {
-        $$ = $1;
-    }
-
-start: program
-    {
-        std::cout << *$1 << std::endl;
-        $$ = $1;
+        $$ = &dest;
+        $$->append_section(new StaticSourceSection(*$1));
+        delete $1;
     }
 
 %%

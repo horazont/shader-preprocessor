@@ -4,15 +4,14 @@ set(INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/")
 list(APPEND CMAKE_CXX_FLAGS "-std=c++1y -Wall -Wextra -g -O2")
 list(REMOVE_DUPLICATES CMAKE_CXX_FLAGS)
 
-include_directories(${INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 set(SPP_HEADER
+  spp/ast.hpp
   spp/context.hpp
-  spp/spp.hpp
   spp/lexer.hpp
+  spp/spp.hpp
 )
 set(SPP_SRC
+  src/ast.cpp
   src/context.cpp
 )
 set(SPP_DUMMY
@@ -33,7 +32,11 @@ set(SPP_GEN
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-add_library(spp STATIC ${SPP_SRC} ${SPP_GEN})
+add_library(spp STATIC EXCLUDE_FROM_ALL ${SPP_SRC} ${SPP_GEN})
+
+target_include_directories(spp PUBLIC ${INCLUDE_DIRS})
+target_include_directories(spp PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
 add_custom_command(
     OUTPUT ${SPP_LEXER_CPP_GEN}
     COMMAND ${FLEX_EXECUTABLE} --outfile=${SPP_LEXER_CPP_GEN} ${CMAKE_CURRENT_SOURCE_DIR}/src/lexer.ll
@@ -48,3 +51,11 @@ add_custom_command(
 )
 
 add_custom_target(dummy_spp_files SOURCES ${SPP_DUMMY} ${SPP_HEADER})
+
+
+set(SPPTEST_SRC
+  spptest/spptest.cpp
+)
+
+add_executable(spp_test EXCLUDE_FROM_ALL ${SPPTEST_SRC})
+target_link_libraries(spp_test spp)

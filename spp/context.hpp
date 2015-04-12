@@ -3,12 +3,14 @@
 
 #include <string>
 
+#include "spp/lexer.hpp"
+#include "spp/ast.hpp"
+
 /**
  * This namespace holds the Shader Preprocessor interface and implementation.
  */
 namespace spp {
 
-class Scanner;
 class location;
 
 /**
@@ -16,13 +18,30 @@ class location;
  */
 class ParserContext
 {
+public:
+    ParserContext(std::istream &in);
+    virtual ~ParserContext();
+
+private:
+    std::istream &m_in;
+
+    Scanner m_scanner;
 
 public:
-    Scanner &lexer();
-    const Scanner &lexer() const;
+    inline Scanner &lexer()
+    {
+        return m_scanner;
+    }
 
-    void error(const std::string &message);
-    void error(const location &loc, const std::string &message);
+    inline const Scanner &lexer() const
+    {
+        return m_scanner;
+    }
+
+    virtual void error(const std::string &message);
+    virtual void error(const location &loc, const std::string &message);
+
+    std::unique_ptr<Program> parse();
 
 };
 

@@ -14,8 +14,13 @@
 #undef yyFlexLexer
 #endif
 
-#include "spp/context.hpp"
+namespace spp {
 
+class ParserContext;
+
+}
+
+#include "spp/ast.hpp"
 #include "parser.hpp"
 
 namespace spp {
@@ -23,8 +28,8 @@ namespace spp {
 class Scanner: ::sppFlexLexer
 {
 public:
-    Scanner(std::istream *arg_yyin = 0,
-            std::ostream *arg_yyout = 0);
+    Scanner(std::istream *arg_yyin,
+            std::ostream *arg_yyout);
 
     ~Scanner() override;
 
