@@ -1,0 +1,40 @@
+#ifndef SPP_LEXER_H
+#define SPP_LEXER_H
+
+#ifndef YY_DECL
+#define YY_DECL \
+    spp::Parser::token_type spp::Scanner::lex(\
+        spp::Parser::semantic_type *yylval, \
+        spp::Parser::location_type *yylloc)
+#endif
+
+#ifndef __FLEX_LEXER_H
+#define yyFlexLexer sppFlexLexer
+#include "FlexLexer.h"
+#undef yyFlexLexer
+#endif
+
+#include "spp/context.hpp"
+
+#include "parser.hpp"
+
+namespace spp {
+
+class Scanner: ::sppFlexLexer
+{
+public:
+    Scanner(std::istream *arg_yyin = 0,
+            std::ostream *arg_yyout = 0);
+
+    ~Scanner() override;
+
+    virtual Parser::token_type lex(
+            Parser::semantic_type *yylval,
+            Parser::location_type *yylloc);
+
+    void set_debug(bool debug);
+};
+
+}
+
+#endif
