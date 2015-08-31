@@ -36,10 +36,10 @@
 %token INTLIT "integer literal"
 %token STRLIT "string literal"
 %token IDENT "identifier"
-%token INCLUDE "#include directive"
 %token DIROPEN "start of directive"
-%token DIREND "end of directive"
+%token DIRCLOSE "end of directive"
 %token ERROR
+%token DIRECTIVE_INCLUDE "include keyword"
 
 %type <program> program
 %type <version> version
@@ -100,10 +100,10 @@ strlit
     }
 
 include
-    : INCLUDE strlit EOL
+    : DIROPEN DIRECTIVE_INCLUDE strlit DIRCLOSE
     {
-        $$ = new IncludeDirective(*$2);
-        delete $2;
+        $$ = new IncludeDirective(*$3);
+        delete $3;
     }
 
 program

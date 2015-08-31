@@ -20,7 +20,7 @@ typedef spp::Parser::token_type token_type;
 %option yywrap nounput
 %option stack
 
-%x DIRECTIVE INSIDE_LINE
+%x VERSION_DIRECTIVE DIRECTIVE CODE
 
 %{
 #define MAX_INCLUDE_DEPTH 10
@@ -34,46 +34,98 @@ typedef spp::Parser::token_type token_type;
 %}
 
 <INITIAL>#version {
-    BEGIN(DIRECTIVE);
+    BEGIN(VERSION_DIRECTIVE);
     yylloc->step();
     return token::VERSION;
 }
 
-<INITIAL>#include {
-    BEGIN(DIRECTIVE);
-    yylloc->step();
-    return token::INCLUDE;
-}
-
-<INSIDE_LINE>[^\n]*\n {
-    BEGIN(INITIAL);
-    yylloc->lines(1);
-    yylval->sourcecode = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
-}
-
-<INSIDE_LINE>[^\n]+ {
-    BEGIN(INITIAL);
-    yylloc->lines(1);
-    yylval->sourcecode = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
-}
-
-<DIRECTIVE>[ \t\r]+ {
+<VERSION_DIRECTIVE>[ \t\r]+ {
     yylloc->step();
 }
 
-<DIRECTIVE>\n {
-    BEGIN(INITIAL);
+<VERSION_DIRECTIVE>\n {
+    BEGIN(CODE);
     yylloc->step();
     yylloc->lines(1);
     return token::EOL;
 }
 
-<DIRECTIVE>[0-9]+ {
+<VERSION_DIRECTIVE>[0-9]+ {
     yylloc->step();
     yylval->intlit = atoi(yytext);
     return token::INTLIT;
+}
+
+<VERSION_DIRECTIVE>[_a-zA-Z][_a-zA-Z0-9]* {
+    yylloc->step();
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::IDENT;
+}
+
+<VERSION_DIRECTIVE><<EOF>> {
+    BEGIN(INITIAL);
+    return token::EOL;
+}
+
+<VERSION_DIRECTIVE>. {
+    yylloc->step();
+    return static_cast<token_type>(*yytext);
+}
+
+<CODE>\"(\\.|[^"])*\" {
+    yylloc->step();
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<CODE>\{\% {
+    BEGIN(DIRECTIVE);
+    std::cout << "diropen" << std::endl;
+    yylloc->step();
+    return token::DIROPEN;
+}
+
+<CODE>\{ {
+    yylloc->step();
+    std::cout << "lone open brace" << yytext << std::endl;;
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<CODE>\/\/[^\n]*\n {
+    yylloc->step();
+    yylloc->lines(1);
+    std::cout << "source code comment " << yytext;
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<CODE>\/\*(.|\n)+?\*\/ {
+    yylloc->step();
+    yylloc->lines(1);
+    std::cout << "source code comment " << yytext << std::endl;
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<CODE>[^{\n"]*\n {
+    yylloc->step();
+    yylloc->lines(1);
+    std::cout << "source code with newline " << yytext;
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<CODE>[^{\n"]+ {
+    yylloc->step();
+    std::cout << "source code without newline " << yytext << std::endl;
+    yylval->strlit = new std::string(yytext, yyleng);
+    return token::SOURCECODE;
+}
+
+<DIRECTIVE>include {
+    yylloc->step();
+    return token::DIRECTIVE_INCLUDE;
 }
 
 <DIRECTIVE>[_a-zA-Z][_a-zA-Z0-9]* {
@@ -100,26 +152,13 @@ typedef spp::Parser::token_type token_type;
     return token::STRLIT;
 }
 
-<DIRECTIVE><<EOF>> {
-    BEGIN(INITIAL);
-    return token::EOL;
-}
-
-<DIRECTIVE>. {
+<DIRECTIVE>[ \t\r]+ {
     yylloc->step();
-    return static_cast<token_type>(*yytext);
 }
 
-<INITIAL>\n {
-    yylval->sourcecode = new std::string(yytext, yyleng);
-    yylloc->lines(1);
-    return token::SOURCECODE;
-}
-
-<INITIAL>. {
-    BEGIN(INSIDE_LINE);
-    yylval->sourcecode = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
+<DIRECTIVE>%\} {
+    BEGIN(CODE);
+    return token::DIRCLOSE;
 }
 
 <<EOF>> {
