@@ -72,12 +72,6 @@ typedef spp::Parser::token_type token_type;
     return static_cast<token_type>(*yytext);
 }
 
-<CODE>\"(\\.|[^"])*\" {
-    yylloc->step();
-    yylval->strlit = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
-}
-
 <CODE>\{\% {
     BEGIN(DIRECTIVE);
     std::cout << "diropen" << std::endl;
@@ -92,23 +86,7 @@ typedef spp::Parser::token_type token_type;
     return token::SOURCECODE;
 }
 
-<CODE>\/\/[^\n]*\n {
-    yylloc->step();
-    yylloc->lines(1);
-    std::cout << "source code comment " << yytext;
-    yylval->strlit = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
-}
-
-<CODE>\/\*(.|\n)+?\*\/ {
-    yylloc->step();
-    yylloc->lines(1);
-    std::cout << "source code comment " << yytext << std::endl;
-    yylval->strlit = new std::string(yytext, yyleng);
-    return token::SOURCECODE;
-}
-
-<CODE>[^{\n"]*\n {
+<CODE>[^{\n]*\n {
     yylloc->step();
     yylloc->lines(1);
     std::cout << "source code with newline " << yytext;
@@ -116,7 +94,7 @@ typedef spp::Parser::token_type token_type;
     return token::SOURCECODE;
 }
 
-<CODE>[^{\n"]+ {
+<CODE>[^{\n]+ {
     yylloc->step();
     std::cout << "source code without newline " << yytext << std::endl;
     yylval->strlit = new std::string(yytext, yyleng);

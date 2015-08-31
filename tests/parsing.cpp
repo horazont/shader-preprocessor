@@ -241,12 +241,7 @@ TEST_CASE("parser/sourcecode/string_literals")
     std::unique_ptr<Program> prog(ctx.parse());
     CHECK(ctx.errors().empty());
     REQUIRE(prog);
-    REQUIRE(prog->size() >= 3);
-    CHECK(prog->size() == 4);
-
-    StaticSourceSection *source = dynamic_cast<StaticSourceSection*>(&(*prog)[2]);
-    REQUIRE(source);
-    CHECK(source->source() == "\"foo \\\" bar \"");
+    REQUIRE(prog->size() >= 2);
 
     std::string expected("#version 330 core\n"
                          "foo bar \"foo \\\" bar \" baz");
@@ -258,24 +253,17 @@ TEST_CASE("parser/sourcecode/string_literals")
 TEST_CASE("parser/sourcecode/c++_style_comments")
 {
     std::istringstream data("#version 330 core fragment\n"
-                            "foo bar\n"
-                            "// baz \"foofoo\"\n"
+                            "foo // baz \"foofoo\"\n"
                             "fnord");
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
     CHECK(ctx.errors().empty());
     REQUIRE(prog);
-    REQUIRE(prog->size() >= 3);
-    CHECK(prog->size() == 4);
-
-    StaticSourceSection *source = dynamic_cast<StaticSourceSection*>(&(*prog)[2]);
-    REQUIRE(source);
-    CHECK(source->source() == "// baz \"foofoo\"\n");
+    CHECK(prog->size() == 3);
 
     std::string expected("#version 330 core\n"
-                         "foo bar\n"
-                         "// baz \"foofoo\"\n"
+                         "foo // baz \"foofoo\"\n"
                          "fnord");
     std::ostringstream evaluated;
     prog->evaluate(evaluated);
@@ -285,25 +273,17 @@ TEST_CASE("parser/sourcecode/c++_style_comments")
 TEST_CASE("parser/sourcecode/c_style_comments")
 {
     std::istringstream data("#version 330 core fragment\n"
-                            "foo bar\n"
-                            "/* baz \"foofoo\"\n"
+                            "foo /* baz \"foofoo\"\n"
                             "fnord */end");
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
     CHECK(ctx.errors().empty());
     REQUIRE(prog);
-    REQUIRE(prog->size() >= 3);
-    CHECK(prog->size() == 4);
-
-    StaticSourceSection *source = dynamic_cast<StaticSourceSection*>(&(*prog)[2]);
-    REQUIRE(source);
-    CHECK(source->source() == "/* baz \"foofoo\"\n"
-                              "fnord */");
+    CHECK(prog->size() == 3);
 
     std::string expected("#version 330 core\n"
-                         "foo bar\n"
-                         "/* baz \"foofoo\"\n"
+                         "foo /* baz \"foofoo\"\n"
                          "fnord */end");
     std::ostringstream evaluated;
     prog->evaluate(evaluated);
