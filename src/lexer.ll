@@ -82,14 +82,12 @@ typedef spp::Parser::token_type token_type;
 
 <CODE>\{\% {
     BEGIN(DIRECTIVE);
-    std::cout << "diropen" << std::endl;
     yylloc->step();
     return token::DIROPEN;
 }
 
 <CODE>\{ {
     yylloc->step();
-    std::cout << "lone open brace" << yytext << std::endl;;
     yylval->strlit = new std::string(yytext, yyleng);
     return token::SOURCECODE;
 }
@@ -97,14 +95,12 @@ typedef spp::Parser::token_type token_type;
 <CODE>[^{\n]*\n {
     yylloc->step();
     yylloc->lines(1);
-    std::cout << "source code with newline " << yytext;
     yylval->strlit = new std::string(yytext, yyleng);
     return token::SOURCECODE;
 }
 
 <CODE>[^{\n]+ {
     yylloc->step();
-    std::cout << "source code without newline " << yytext << std::endl;
     yylval->strlit = new std::string(yytext, yyleng);
     return token::SOURCECODE;
 }

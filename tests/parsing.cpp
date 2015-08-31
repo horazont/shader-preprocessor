@@ -13,7 +13,10 @@ void dump_errors(InputIterator begin, const InputIterator &end)
 {
     for (InputIterator i = begin; i != end; ++i)
     {
-        std::cout << "error during parsing: " << std::get<1>(*i) << std::endl;
+        std::cout << "error during parsing: "
+                  << std::get<0>(*i) << ":"
+                  << std::get<1>(*i) << ": "
+                  << std::get<2>(*i) << std::endl;
     }
 }
 
@@ -175,7 +178,6 @@ TEST_CASE("parser/include_directive/incorrect_escape_sequence")
     std::unique_ptr<Program> prog(ctx.parse());
     REQUIRE(prog);
     CHECK_FALSE(prog->errors().empty());
-    dump_errors(prog->errors().begin(), prog->errors().end());
     CHECK(prog->size() == 4);
 }
 
