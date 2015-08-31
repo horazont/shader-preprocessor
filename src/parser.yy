@@ -122,6 +122,10 @@ program
     {
         $$ = $1;
     }
+    | error
+    {
+        $$ = &dest;
+    }
     | version
     {
         $$ = &dest;

@@ -17,7 +17,7 @@ typedef spp::Parser::token_type token_type;
 %option prefix="spp"
 %option batch
 %option debug
-%option yywrap nounput
+%option yywrap
 %option stack
 
 %x VERSION_DIRECTIVE DIRECTIVE CODE
@@ -37,6 +37,14 @@ typedef spp::Parser::token_type token_type;
     BEGIN(VERSION_DIRECTIVE);
     yylloc->step();
     return token::VERSION;
+}
+
+<INITIAL>. {
+    // no version directive. this will break with the parser, but we want to
+    // check the remainder of the program. so we have to make reasonable output
+    // here...
+    unput(*yytext);
+    BEGIN(CODE);
 }
 
 <VERSION_DIRECTIVE>[ \t\r]+ {
