@@ -4,7 +4,8 @@ namespace spp {
 
 ParserContext::ParserContext(std::istream &in):
     m_in(in),
-    m_scanner(&m_in, nullptr)
+    m_scanner(*this, &m_in, nullptr),
+    m_errors()
 {
 
 }
@@ -16,12 +17,14 @@ ParserContext::~ParserContext()
 
 void ParserContext::error(const std::string &message)
 {
-    std::cerr << "parser error: " << message << std::endl;
+    m_errors.emplace_back(location(), message);
+    /* std::cerr << "parser error: " << message << std::endl; */
 }
 
 void ParserContext::error(const location &loc, const std::string &message)
 {
-    std::cerr << "parser error: " << message << std::endl;
+    m_errors.emplace_back(loc, message);
+    /* std::cerr << "parser error: " << loc.begin.line << ":" << loc.begin.column << ": " << message << std::endl; */
 }
 
 std::unique_ptr<Program> ParserContext::parse()

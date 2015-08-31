@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/")
-list(APPEND CMAKE_CXX_FLAGS "-std=c++1y -Wall -Wextra -g -O2")
-list(REMOVE_DUPLICATES CMAKE_CXX_FLAGS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -Wextra -g -O2")
 
 set(SPP_HEADER
   spp/ast.hpp
@@ -32,7 +31,7 @@ set(SPP_GEN
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-add_library(spp STATIC EXCLUDE_FROM_ALL ${SPP_SRC} ${SPP_GEN})
+add_library(spp STATIC ${SPP_SRC} ${SPP_GEN})
 
 target_include_directories(spp PUBLIC ${INCLUDE_DIRS})
 target_include_directories(spp PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
@@ -54,8 +53,12 @@ add_custom_target(dummy_spp_files SOURCES ${SPP_DUMMY} ${SPP_HEADER})
 
 
 set(SPPTEST_SRC
-  spptest/spptest.cpp
+  tests/main.cpp
+  tests/fulltests.cpp
+  tests/testdata.hpp
+  tests/parsing.cpp
 )
 
-add_executable(spp_test EXCLUDE_FROM_ALL ${SPPTEST_SRC})
-target_link_libraries(spp_test spp)
+add_executable(spptests ${SPPTEST_SRC})
+target_link_libraries(spptests spp)
+target_include_directories(spptests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Catch/include)

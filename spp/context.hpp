@@ -19,6 +19,9 @@ class location;
 class ParserContext
 {
 public:
+    typedef std::tuple<location, std::string> RecordedError;
+
+public:
     ParserContext(std::istream &in);
     virtual ~ParserContext();
 
@@ -26,6 +29,9 @@ private:
     std::istream &m_in;
 
     Scanner m_scanner;
+
+protected:
+    std::vector<std::tuple<location, std::string> > m_errors;
 
 public:
     inline Scanner &lexer()
@@ -36,6 +42,11 @@ public:
     inline const Scanner &lexer() const
     {
         return m_scanner;
+    }
+
+    inline const std::vector<RecordedError> &errors() const
+    {
+        return m_errors;
     }
 
     virtual void error(const std::string &message);

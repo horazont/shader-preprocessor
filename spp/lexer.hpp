@@ -28,7 +28,8 @@ namespace spp {
 class Scanner: ::sppFlexLexer
 {
 public:
-    Scanner(std::istream *arg_yyin,
+    Scanner(ParserContext &context,
+            std::istream *arg_yyin,
             std::ostream *arg_yyout);
 
     ~Scanner() override;
