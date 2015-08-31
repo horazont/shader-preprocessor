@@ -8,10 +8,12 @@ set(SPP_HEADER
   spp/context.hpp
   spp/lexer.hpp
   spp/spp.hpp
+  spp/loader.hpp
 )
 set(SPP_SRC
   src/ast.cpp
   src/context.cpp
+  src/loader.cpp
 )
 set(SPP_DUMMY
   src/lexer.ll
@@ -57,6 +59,7 @@ set(SPPTEST_SRC
   tests/fulltests.cpp
   tests/testdata.hpp
   tests/parsing.cpp
+  tests/eval.cpp
 )
 
 add_executable(spptests ${SPPTEST_SRC})

@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include "location.hh"
+
 namespace spp {
 
 
@@ -18,6 +20,10 @@ enum class ProgramType {
     GEOMETRY = 3,
     FRAGMENT = 4
 };
+
+
+class EvaluationContext;
+
 
 template <typename internal_iterator, typename for_class>
 class DereferencingIterator
@@ -94,15 +100,25 @@ public:
 class Section
 {
 public:
-    Section();
+    explicit Section(const location &location);
     Section(const Section &ref) = delete;
     Section &operator=(const Section &ref) = delete;
     Section(Section &&src) = delete;
     Section &operator=(Section &&src) = delete;
     virtual ~Section();
 
+protected:
+    location m_location;
+
 public:
-    virtual void evaluate(std::ostream &into) = 0;
+    virtual std::unique_ptr<Section> copy() const = 0;
+    virtual void evaluate(std::ostream &into, EvaluationContext &ctx) = 0;
+
+public:
+    inline const location &loc() const
+    {
+        return m_location;
+    }
 
 };
 
@@ -110,7 +126,8 @@ public:
 class VersionDeclaration: public Section
 {
 public:
-    VersionDeclaration(unsigned int version,
+    VersionDeclaration(const location &location,
+                       unsigned int version,
                        const std::string &profile,
                        ProgramType type);
 
@@ -136,7 +153,8 @@ public:
     }
 
 public:
-    void evaluate(std::ostream &into) override;
+    std::unique_ptr<Section> copy() const override;
+    void evaluate(std::ostream &into, EvaluationContext &ctx) override;
 
 };
 
@@ -145,13 +163,15 @@ class StaticSourceSection: public Section
 {
 public:
     StaticSourceSection() = default;
-    explicit StaticSourceSection(const std::string &source);
+    explicit StaticSourceSection(const location &location,
+                                 const std::string &source);
 
 private:
     std::string m_source;
 
 public:
-    void evaluate(std::ostream &into) override;
+    std::unique_ptr<Section> copy() const override;
+    void evaluate(std::ostream &into, EvaluationContext &ctx) override;
 
     inline std::string &source()
     {
@@ -169,13 +189,14 @@ public:
 class IncludeDirective: public Section
 {
 public:
-    explicit IncludeDirective(const std::string &path);
+    explicit IncludeDirective(const location &location, const std::string &path);
 
 private:
     std::string m_path;
 
 public:
-    void evaluate(std::ostream &into) override;
+    std::unique_ptr<Section> copy() const override;
+    void evaluate(std::ostream &into, EvaluationContext &ctx) override;
 
     inline std::string &path()
     {
@@ -198,10 +219,13 @@ protected:
 public:
     typedef DereferencingIterator<typename container_type::iterator, Program> iterator;
     typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef DereferencingIterator<typename container_type::const_iterator, Program> const_iterator;
     typedef typename container_type::size_type size_type;
 
+    typedef std::tuple<std::string, location, std::string> RecordedError;
+
 public:
-    Program();
+    explicit Program(const std::string &source_path = "<memory>");
     Program(const Program &src) = delete;
     Program(Program &&src) = delete;
     Program &operator=(const Program &src) = delete;
@@ -209,22 +233,21 @@ public:
 
 private:
     ProgramType m_type;
+    std::string m_source_path;
+    std::vector<RecordedError> m_errors;
     std::vector<std::unique_ptr<Section> > m_sections;
 
-public:
+public: // interface for the parser
+    void add_local_error(const location &location,
+                         const std::string &msg);
+    void add_error(const RecordedError &ref);
+
+    inline const std::vector<RecordedError> &errors() const
+    {
+        return m_errors;
+    }
+
     void append_section(std::unique_ptr<Section> &&sec);
-
-    inline iterator begin()
-    {
-        return iterator(m_sections.begin());
-    }
-
-    inline iterator end()
-    {
-        return iterator(m_sections.end());
-    }
-
-    void evaluate(std::ostream &into);
 
     inline ProgramType type() const
     {
@@ -233,11 +256,32 @@ public:
 
     void set_type(ProgramType new_type);
 
+
+public: // container interface
+    inline iterator begin()
+    {
+        return iterator(m_sections.begin());
+    }
+
+    inline const_iterator cbegin() const
+    {
+        return const_iterator(m_sections.cbegin());
+    }
+
+    inline iterator end()
+    {
+        return iterator(m_sections.end());
+    }
+
+    inline const_iterator cend() const
+    {
+        return const_iterator(m_sections.cend());
+    }
+
     inline size_type size() const
     {
         return m_sections.size();
     }
-
 
     inline Section &operator[](const size_type pos)
     {
@@ -248,6 +292,16 @@ public:
     {
         return *m_sections[pos];
     }
+
+    iterator erase(iterator iter);
+    iterator erase(iterator first, iterator last);
+    iterator insert(iterator before, std::unique_ptr<Section> &&section);
+
+
+public:
+    std::unique_ptr<Program> copy() const;
+
+    void evaluate(std::ostream &into, EvaluationContext &ctx) const;
 };
 
 }

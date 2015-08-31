@@ -25,9 +25,9 @@ TEST_CASE("parser/version_directive/fragment")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -46,9 +46,9 @@ TEST_CASE("parser/version_directive/vertex")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -67,9 +67,9 @@ TEST_CASE("parser/version_directive/without_type")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -87,9 +87,9 @@ TEST_CASE("parser/version_directive/without_trailing_newline")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -109,9 +109,9 @@ TEST_CASE("parser/version_directive/tesselation")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -130,9 +130,9 @@ TEST_CASE("parser/version_directive/geometry")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 1);
     CHECK(prog->size() == 1);
@@ -152,9 +152,9 @@ TEST_CASE("parser/include_directive")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 2);
     CHECK(prog->size() == 3);
@@ -173,16 +173,10 @@ TEST_CASE("parser/include_directive/incorrect_escape_sequence")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK_FALSE(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK_FALSE(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
     CHECK(prog->size() == 4);
-
-    std::string expected("#version 330 core\n"
-                         "\n\nfoo bar baz");
-    std::ostringstream evaluated;
-    prog->evaluate(evaluated);
-    CHECK(evaluated.str() == expected);
 }
 
 TEST_CASE("parser/include_directive/without_terminating_newline")
@@ -192,9 +186,9 @@ TEST_CASE("parser/include_directive/without_terminating_newline")
 
     ParserContext ctx(data);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
-    dump_errors(ctx.errors().begin(), ctx.errors().end());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
+    dump_errors(prog->errors().begin(), prog->errors().end());
 
     REQUIRE(prog->size() >= 2);
     CHECK(prog->size() == 2);
@@ -204,14 +198,6 @@ TEST_CASE("parser/include_directive/without_terminating_newline")
     CHECK(include->path() == std::string("foobar"));
 }
 
-TEST_CASE("parser/include_directive/evaluate_properly_escaped")
-{
-    IncludeDirective test("foo \"bar\" baz \n \r");
-    std::ostringstream dest;
-    test.evaluate(dest);
-    CHECK(dest.str() == std::string("#include \"foo \\\"bar\\\" baz \\n \\r\"\n"));
-}
-
 TEST_CASE("parser/sourcecode")
 {
     std::istringstream data("#version 330 core fragment\n"
@@ -219,16 +205,18 @@ TEST_CASE("parser/sourcecode")
                             "baz");
 
     ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
     CHECK(prog->size() == 3);
 
     std::string expected("#version 330 core\n"
                          "foo bar\n"
                          "baz");
     std::ostringstream evaluated;
-    prog->evaluate(evaluated);
+    prog->evaluate(evaluated, ectx);
     CHECK(evaluated.str() == expected);
 }
 
@@ -238,15 +226,17 @@ TEST_CASE("parser/sourcecode/string_literals")
                             "foo bar \"foo \\\" bar \" baz");
 
     ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
     REQUIRE(prog->size() >= 2);
 
     std::string expected("#version 330 core\n"
                          "foo bar \"foo \\\" bar \" baz");
     std::ostringstream evaluated;
-    prog->evaluate(evaluated);
+    prog->evaluate(evaluated, ectx);
     CHECK(evaluated.str() == expected);
 }
 
@@ -257,16 +247,18 @@ TEST_CASE("parser/sourcecode/c++_style_comments")
                             "fnord");
 
     ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
     CHECK(prog->size() == 3);
 
     std::string expected("#version 330 core\n"
                          "foo // baz \"foofoo\"\n"
                          "fnord");
     std::ostringstream evaluated;
-    prog->evaluate(evaluated);
+    prog->evaluate(evaluated, ectx);
     CHECK(evaluated.str() == expected);
 }
 
@@ -277,15 +269,35 @@ TEST_CASE("parser/sourcecode/c_style_comments")
                             "fnord */end");
 
     ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
     CHECK(prog->size() == 3);
 
     std::string expected("#version 330 core\n"
                          "foo /* baz \"foofoo\"\n"
                          "fnord */end");
     std::ostringstream evaluated;
-    prog->evaluate(evaluated);
+    prog->evaluate(evaluated, ectx);
+    CHECK(evaluated.str() == expected);
+}
+
+TEST_CASE("parser/version_declaration/recover_missing")
+{
+    std::istringstream data("foobar\nbaz\n");
+
+    ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
+    std::unique_ptr<Program> prog(ctx.parse());
+    REQUIRE(prog);
+    CHECK(!prog->errors().empty());
+    CHECK(prog->size() == 2);
+
+    std::string expected("foobar\nbaz\n");
+    std::ostringstream evaluated;
+    prog->evaluate(evaluated, ectx);
     CHECK(evaluated.str() == expected);
 }

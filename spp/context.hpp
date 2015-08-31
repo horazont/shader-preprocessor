@@ -1,10 +1,13 @@
 #ifndef SPP_CONTEXT_H
 #define SPP_CONTEXT_H
 
+#include <unordered_map>
+#include <set>
 #include <string>
 
 #include "spp/lexer.hpp"
 #include "spp/ast.hpp"
+#include "spp/loader.hpp"
 
 /**
  * This namespace holds the Shader Preprocessor interface and implementation.
@@ -19,14 +22,12 @@ class location;
 class ParserContext
 {
 public:
-    typedef std::tuple<location, std::string> RecordedError;
-
-public:
-    ParserContext(std::istream &in);
+    ParserContext(std::istream &in, const std::string &source_path = "<memory>");
     virtual ~ParserContext();
 
 private:
     std::istream &m_in;
+    std::string m_source_path;
 
     Scanner m_scanner;
 
@@ -44,17 +45,67 @@ public:
         return m_scanner;
     }
 
-    inline const std::vector<RecordedError> &errors() const
-    {
-        return m_errors;
-    }
-
-    virtual void error(const std::string &message);
-    virtual void error(const location &loc, const std::string &message);
-
     std::unique_ptr<Program> parse();
 
 };
+
+
+class Library
+{
+public:
+    Library();
+    explicit Library(std::unique_ptr<Loader> &&loader);
+    virtual ~Library();
+
+protected:
+    unsigned int m_max_include_depth;
+    std::unique_ptr<Loader> m_loader;
+    std::unordered_map<std::string, std::unique_ptr<Program> > m_cache;
+
+protected:
+    void resolve_includes(Program *in_program, unsigned int depth);
+    virtual const Program *_load(const std::string &path, unsigned int depth);
+
+public:
+    const Program *load(const std::string &path);
+
+public:
+    inline void set_loader(std::unique_ptr<Loader> &&loader)
+    {
+        m_loader = std::move(loader);
+    }
+
+    inline void set_max_include_depth(unsigned int depth)
+    {
+        m_max_include_depth = depth;
+    }
+
+};
+
+
+class EvaluationContext
+{
+public:
+    typedef std::tuple<std::string, std::string> Define;
+
+public:
+    explicit EvaluationContext(Library &library);
+
+private:
+    Library &m_library;
+    std::set<std::string> m_define_names;
+    std::vector<Define> m_defines;
+
+public:
+    void define(const std::string &name, const std::string &rhs);
+
+    inline const std::vector<Define> &defines() const
+    {
+        return m_defines;
+    }
+
+};
+
 
 }
 

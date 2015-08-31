@@ -80,11 +80,11 @@ shader_type
 version
     : VERSION INTLIT IDENT shader_type EOL
     {
-        $$ = new VersionDeclaration($2, *$3, static_cast<ProgramType>($4));
+        $$ = new VersionDeclaration(@$, $2, *$3, static_cast<ProgramType>($4));
     }
     | VERSION INTLIT IDENT EOL
     {
-        $$ = new VersionDeclaration($2, *$3, ProgramType::GENERIC);
+        $$ = new VersionDeclaration(@$, $2, *$3, ProgramType::GENERIC);
     }
 
 strlit
@@ -102,7 +102,7 @@ strlit
 include
     : DIROPEN DIRECTIVE_INCLUDE strlit DIRCLOSE
     {
-        $$ = new IncludeDirective(*$3);
+        $$ = new IncludeDirective(@$, *$3);
         delete $3;
     }
 
@@ -110,7 +110,7 @@ program
     : program SOURCECODE
     {
         $$ = $1;
-        $$->append_section(std::make_unique<StaticSourceSection>(*$2));
+        $$->append_section(std::make_unique<StaticSourceSection>(@2, *$2));
         delete $2;
     }
     | program include
@@ -138,5 +138,5 @@ program
 void spp::Parser::error(const spp::Parser::location_type &l,
                         const std::string &m)
 {
-    ctx.error(l, m);
+    dest.add_local_error(l, m);
 }

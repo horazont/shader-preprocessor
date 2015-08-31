@@ -12,12 +12,14 @@ TEST_CASE("fulltests/fragment_shader")
 {
     std::istringstream data(test_glsl);
     ParserContext ctx(data);
+    Library lib;
+    EvaluationContext ectx(lib);
     std::unique_ptr<Program> prog(ctx.parse());
-    CHECK(ctx.errors().empty());
     REQUIRE(prog);
+    CHECK(prog->errors().empty());
     CHECK(prog->type() == ProgramType::FRAGMENT);
 
     std::ostringstream out;
-    prog->evaluate(out);
+    prog->evaluate(out, ectx);
     CHECK(out.str() == std::string(test_glsl_processed));
 }
