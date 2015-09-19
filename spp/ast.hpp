@@ -254,6 +254,11 @@ public: // interface for the parser
         return m_type;
     }
 
+    inline const std::string &source_path() const
+    {
+        return m_source_path;
+    }
+
     void set_type(ProgramType new_type);
 
 

@@ -1,5 +1,8 @@
 #include "spp/context.hpp"
 
+#include <iomanip>
+#include <sstream>
+
 namespace spp {
 
 ParserContext::ParserContext(std::istream &in, const std::string &source_path):
@@ -100,7 +103,7 @@ void Library::resolve_includes(Program *in_program, unsigned int depth)
              included_iter != included->cend();
              ++included_iter)
         {
-            iter = in_program->insert(iter, (*included_iter).copy());
+            iter = ++in_program->insert(iter, (*included_iter).copy());
         }
 
         if (iter == in_program->end()) {
@@ -170,6 +173,30 @@ void EvaluationContext::define(const std::string &name, const std::string &rhs)
 
     m_define_names.insert(name);
     m_defines.emplace_back(name, rhs);
+}
+
+void EvaluationContext::define1ull(const std::string &name, const unsigned long long value)
+{
+    define(name, std::to_string(value));
+}
+
+void EvaluationContext::define1ll(const std::string &name, const signed long long value)
+{
+    define(name, std::to_string(value));
+}
+
+void EvaluationContext::define1f(const std::string &name, const float value)
+{
+    std::ostringstream tmp;
+    tmp << std::setprecision(10) << value;
+    define(name, tmp.str());
+}
+
+void EvaluationContext::define1d(const std::string &name, const double value)
+{
+    std::ostringstream tmp;
+    tmp << std::setprecision(18) << value;
+    define(name, tmp.str());
 }
 
 }

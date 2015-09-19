@@ -90,6 +90,7 @@ public:
 
 public:
     explicit EvaluationContext(Library &library);
+    EvaluationContext(const EvaluationContext &ref) = default;
 
 private:
     Library &m_library;
@@ -98,6 +99,10 @@ private:
 
 public:
     void define(const std::string &name, const std::string &rhs);
+    void define1ull(const std::string &name, const unsigned long long value);
+    void define1ll(const std::string &name, const signed long long value);
+    void define1f(const std::string &name, const float value);
+    void define1d(const std::string &name, const double value);
 
     inline const std::vector<Define> &defines() const
     {
