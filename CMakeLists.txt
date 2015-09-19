@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
 set(INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -Wextra -g -O2")
 
 set(SPP_HEADER
   spp/ast.hpp
@@ -34,6 +33,11 @@ find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
 add_library(spp STATIC ${SPP_SRC} ${SPP_GEN})
+set_property(TARGET spp PROPERTY CXX_STANDARD 14)
+set_property(TARGET spp PROPERTY CXX_STANDARD_REQUIRED ON)
+target_compile_options(spp PRIVATE -Wall -Wextra)
+target_compile_options(spp PRIVATE $<$<CONFIG:DEBUG>:-ggdb -O2>)
+target_compile_options(spp PRIVATE $<$<CONFIG:RELEASE>:-O3>)
 
 target_include_directories(spp PUBLIC ${INCLUDE_DIRS})
 target_include_directories(spp PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
@@ -63,5 +67,10 @@ set(SPPTEST_SRC
 )
 
 add_executable(spptests ${SPPTEST_SRC})
+set_property(TARGET spptests PROPERTY CXX_STANDARD 14)
+set_property(TARGET spptests PROPERTY CXX_STANDARD_REQUIRED ON)
+target_compile_options(spptests PRIVATE -Wall -Werror)
+target_compile_options(spptests PRIVATE $<$<CONFIG:DEBUG>:-ggdb -O2>)
+target_compile_options(spptests PRIVATE $<$<CONFIG:RELEASE>:-O3>)
 target_link_libraries(spptests spp)
 target_include_directories(spptests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Catch/include)
